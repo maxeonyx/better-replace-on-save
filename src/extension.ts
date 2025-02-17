@@ -30,16 +30,26 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
-	provideCodeActions(): vscode.CodeAction[] {
+	provideCodeActions(
+		document: vscode.TextDocument,
+		range: vscode.Range | vscode.Selection,
+		context: vscode.CodeActionContext,
+		token: vscode.CancellationToken,
+	): vscode.CodeAction[] {
+		const codeActionKind = vscode.CodeActionKind.Source.append('applyReplacements');
 		const action = new vscode.CodeAction(
 			'Apply configured replacements',
-			vscode.CodeActionKind.Source.append('applyReplacements')
+			codeActionKind,
 		);
 		action.command = {
 			command: 'better-replace-on-save.applyReplacements',
 			title: 'Apply configured replacements'
 		};
-		return [action];
+		if (context.only?.contains(codeActionKind)) {
+			return [action];
+		} else {
+			return [];
+		}
 	}
 }
 
