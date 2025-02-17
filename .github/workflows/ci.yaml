@@ -1,4 +1,4 @@
-name: build_and_test
+name: build_and_publish
 
 on:
   push:
@@ -6,15 +6,9 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      publish:
-        description: 'Approve to publish'
-        required: true
-        default: false
-        type: boolean
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,10 +48,15 @@ jobs:
         with:
           name: vsix
           path: ./*.vsix
+
   publish:
-    needs: build_and_test
-    if: github.event.inputs.publish == 'true'
+    needs: build
     runs-on: ubuntu-latest
+    environment: published  # This is the key line!
+
+    # Only run on main branch (not pull requests)
+    if: github.ref == 'refs/heads/main'
+
     steps:
       - name: Check out
         uses: actions/checkout@v4
