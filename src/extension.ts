@@ -33,7 +33,7 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 	provideCodeActions(): vscode.CodeAction[] {
 		const action = new vscode.CodeAction(
 			'Apply configured replacements',
-			vscode.CodeActionKind.Source.append('better-replace-on-save')
+			vscode.CodeActionKind.Source.append('applyReplacements')
 		);
 		action.command = {
 			command: 'better-replace-on-save.applyReplacements',
