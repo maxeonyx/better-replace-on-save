@@ -1,2 +1,2 @@
-# replace-on-save
-Better replace-on-save for VSCode
+# better-replace-on-save
+Replace-on-save with better VSCode integration.
