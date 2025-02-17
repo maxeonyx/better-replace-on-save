@@ -11,3 +11,7 @@ Initial release:
 ## 0.1.1
 
 Version bump to test publish on CI/CD
+
+## 0.1.2
+
+Fix codeAction name: `source.better-replace-on-save` --> `source.applyReplacements`
