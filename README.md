@@ -62,6 +62,10 @@ Users appreciate release notes as you update your extension.
 
 Initial release
 
+### 0.2.0
+
+Support for specific replacement code actions, and "Apply specific replacement" command.
+
 ---
 
 **Enjoy!**

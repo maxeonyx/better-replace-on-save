@@ -11,3 +11,10 @@ Initial release:
 ## 0.1.1
 
 Version bump to test publish on CI/CD
+
+## 0.2.0
+
+Support for "Apply specific replacement":
+
+- Each replacement with `"id": "subActionID"` will get an associated `source.applyReplacements.subActionID` code action subtype. This can be used eg. in the `editor.codeActionsOnSave` setting.
+- There is a new command available in the command pallete: "Apply Specific Replacement"

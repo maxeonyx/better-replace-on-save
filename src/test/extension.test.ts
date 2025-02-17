@@ -146,4 +146,16 @@ suite('Extension Test Suite', () => {
 			vscode.ConfigurationTarget.Global);
 	});
 
+	test("Specific replacement command works when called directly", async () => {
+
+		// TODO directly call better-replace-on-save.applySpecificReplacement
+
+	});
+
+	test("Specific replacement command works when configured as a code action", async () => {
+
+		// TODO test "on save" replace. Set up editor.codeActionsOnSave with a sub-action source.applyReplacements.replacementID
+
+	});
+
 });

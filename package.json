@@ -19,6 +19,7 @@
         "command": "better-replace-on-save.applyReplacements",
         "title": "Apply Replacements"
       }
+      // TODO: Apply specific replacement
     ],
     "configuration": {
       "title": "Better Replace-on-Save",
@@ -48,6 +49,7 @@
                 }
               }
             }
+            // TODO: id
           },
           "default": [],
           "description": "Array of search and replace configurations"

@@ -2,6 +2,7 @@
 import * as vscode from 'vscode';
 
 interface ReplacementConfig {
+	id: string | undefined;
 	search: string;
 	replace: string;
 	languages?: string[];
@@ -27,23 +28,58 @@ export function activate(context: vscode.ExtensionContext) {
 			await applyReplacements(editor);
 		})
 	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand('better-replace-on-save.applySpecificReplacements', async () => {
+			// TODO: This needs to take and validate a parameter - the replacement ID. It should give the user options if possible.
+			const editor = vscode.window.activeTextEditor;
+			if (!editor) {
+				return;
+			}
+
+			await applyReplacements(editor); // TODO: pass on parameter
+		})
+	);
 }
 
 class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 	provideCodeActions(): vscode.CodeAction[] {
-		const action = new vscode.CodeAction(
-			'Apply configured replacements',
-			vscode.CodeActionKind.Source.append('better-replace-on-save')
+
+		const codeActionKind = vscode.CodeActionKind.Source.append('applyReplacements');
+		const mainAction = new vscode.CodeAction(
+			'Apply all configured replacements',
+			codeActionKind
 		);
-		action.command = {
+		mainAction.command = {
 			command: 'better-replace-on-save.applyReplacements',
 			title: 'Apply configured replacements'
 		};
-		return [action];
+
+		const config = vscode.workspace.getConfiguration('betterReplaceOnSave');
+		const replacements: ReplacementConfig[] = config.get('replacements') || [];
+
+		const subActions = replacements.flatMap((replacement) => {
+			if (replacement.id !== undefined && typeof replacement.id === 'string') {
+				const subAction = new vscode.CodeAction(
+					'Apply all configured replacements',
+					codeActionKind.append(replacement.id)
+				);
+				subAction.command = {
+					command: 'better-replace-on-save.applySpecificReplacement',
+					title: 'Apply specific replacement',
+					arguments: [replacement.id], // TODO: untested
+				};
+				return [subAction]
+			} else {
+				return [];
+			}
+		});
+
+		return [mainAction, ...subActions];
 	}
 }
 
 async function applyReplacements(editor: vscode.TextEditor): Promise<void> {
+	// TODO: Support being called for a specific replacement (or refactor out that)
 	const config = vscode.workspace.getConfiguration('betterReplaceOnSave');
 	const replacements: ReplacementConfig[] = config.get('replacements') || [];
 	const document = editor.document;
@@ -65,11 +101,11 @@ async function applyReplacements(editor: vscode.TextEditor): Promise<void> {
 		for (const replacement of applicableReplacements) {
 			const searchValue = new RegExp(replacement.search, 'gd');
 			const results = text.matchAll(searchValue);
-			for (let result of results) {
-				let start = result.index;
-				let end = result.index + result[0].length;
-				let matchedText = text.substring(start, end);
-				let replacementText = matchedText.replace(searchValue, replacement.replace);
+			for (const result of results) {
+				const start = result.index;
+				const end = result.index + result[0].length;
+				const matchedText = text.substring(start, end);
+				const replacementText = matchedText.replace(searchValue, replacement.replace);
 				editBuilder.replace(new vscode.Range(document.positionAt(start), document.positionAt(end)), replacementText);
 			}
 		}
