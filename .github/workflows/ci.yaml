@@ -1,0 +1,50 @@
+name: build_and_test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+
+      - name: Build
+        run: |
+          npm ci
+          npm run compile
+
+      - name: Install XVFB (VSCode does not support headless mode)
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install --fix-missing xvfb
+
+      - name: Test
+        # from:
+        # https://web.archive.org/web/20240803215619/https://kevinhakanson.com/2024-02-12-testing-a-visual-studio-code-extension-inside-github-actions/
+        # https://github.com/cedar-policy/vscode-cedar/blob/2376ad149001e271b0c9dbb42babd69bef92a9b1/.github/workflows/build_and_test.yml
+        run: |
+          export XDG_RUNTIME_DIR=/run/user/$(id -u)
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+          dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
+          mkdir ~/.vscode && echo '{ "disable-hardware-acceleration": true }' > ~/.vscode/argv.json
+          xvfb-run -a npm run test
+
+      - name: Package VSIX
+        run: |
+          npm run package
+
+      - name: Upload VSIX as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: ./*.vsix

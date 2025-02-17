@@ -1,0 +1,76 @@
+{
+  "name": "better-replace-on-save",
+  "displayName": "Better Replace-on-Save",
+  "description": "Configurable search and replace on save - with proper VSCode integration.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "better-replace-on-save.applyReplacements",
+        "title": "Apply Replacements"
+      }
+    ],
+    "configuration": {
+      "title": "Better Replace-on-Save",
+      "properties": {
+        "betterReplaceOnSave.replacements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "search",
+              "replace"
+            ],
+            "properties": {
+              "search": {
+                "type": "string",
+                "description": "The string or regex pattern to search for"
+              },
+              "replace": {
+                "type": "string",
+                "description": "The replacement string"
+              },
+              "languages": {
+                "type": "array",
+                "description": "VSCode language identifiers to restrict the replacement to (e.g., 'typescript', 'javascriptreact', 'python')",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": [],
+          "description": "Array of search and replace configurations"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.97.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.2",
+    "eslint": "^9.19.0",
+    "typescript": "^5.7.3"
+  }
+}
