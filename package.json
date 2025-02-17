@@ -3,6 +3,7 @@
   "displayName": "Better Replace-on-Save",
   "description": "Configurable search and replace on save - with proper VSCode integration.",
   "version": "0.1.0",
+  "repository": "github:maxeonyx/better-replace-on-save",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -59,7 +60,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
