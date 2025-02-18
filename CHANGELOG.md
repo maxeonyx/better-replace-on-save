@@ -12,6 +12,10 @@ Initial release:
 
 Version bump to test publish on CI/CD
 
+## 0.1.2
+
+Fix codeAction name: `source.better-replace-on-save` --> `source.applyReplacements`
+
 ## 0.2.0
 
 Support for "Apply specific replacement":

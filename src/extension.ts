@@ -42,39 +42,56 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
-	provideCodeActions(): vscode.CodeAction[] {
 
+	provideCodeActions(
+		document: vscode.TextDocument,
+		range: vscode.Range | vscode.Selection,
+		context: vscode.CodeActionContext,
+		token: vscode.CancellationToken,
+	): vscode.CodeAction[] {
 		const codeActionKind = vscode.CodeActionKind.Source.append('applyReplacements');
-		const mainAction = new vscode.CodeAction(
+    if (!context.only?.intersects(codeActionKind)) {
+			return [];
+		}
+		const action = new vscode.CodeAction(
 			'Apply all configured replacements',
-			codeActionKind
+			codeActionKind,
+
 		);
 		mainAction.command = {
 			command: 'better-replace-on-save.applyReplacements',
 			title: 'Apply configured replacements'
 		};
+    let actions;
+    if (context.only && context.only.contains(codeActionKind)) {
+			actions = [mainAction];
+		} else {
+			actions = [];
+		}
 
 		const config = vscode.workspace.getConfiguration('betterReplaceOnSave');
 		const replacements: ReplacementConfig[] = config.get('replacements') || [];
 
 		const subActions = replacements.flatMap((replacement) => {
 			if (replacement.id !== undefined && typeof replacement.id === 'string') {
+        const subActionKind = codeActionKind.append(replacement.id);
 				const subAction = new vscode.CodeAction(
 					'Apply all configured replacements',
-					codeActionKind.append(replacement.id)
+					subActionKind,
 				);
 				subAction.command = {
 					command: 'better-replace-on-save.applySpecificReplacement',
 					title: 'Apply specific replacement',
 					arguments: [replacement.id], // TODO: untested
 				};
-				return [subAction]
-			} else {
-				return [];
+        if (context.only && context.only.contains(subActionKind)) {
+          return [subAction];
+        }
 			}
+      return [];
 		});
-
-		return [mainAction, ...subActions];
+      
+		return [...actions, ...subActions];
 	}
 }
 

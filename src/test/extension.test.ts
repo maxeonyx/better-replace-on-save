@@ -128,7 +128,7 @@ suite('Extension Test Suite', () => {
 
 		// 2. Configure codeActionsOnSave to include our command
 		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {
-			'source.better-replace-on-save': true
+			'source.applyReplacements': true
 		}, vscode.ConfigurationTarget.Global);
 
 		// 3. Create and open test file
