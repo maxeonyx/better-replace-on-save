@@ -16,6 +16,14 @@ Version bump to test publish on CI/CD
 
 Fix codeAction name: `source.better-replace-on-save` --> `source.applyReplacements`
 
+## 0.1.3
+
+Fix warnings about requested code actions.
+
+## 0.1.4
+
+Fix extension not activating on startup.
+
 ## 0.2.0
 
 Support for "Apply specific replacement":
