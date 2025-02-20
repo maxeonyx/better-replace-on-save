@@ -50,10 +50,10 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 		token: vscode.CancellationToken,
 	): vscode.CodeAction[] {
 		const codeActionKind = vscode.CodeActionKind.Source.append('applyReplacements');
-    if (!context.only?.intersects(codeActionKind)) {
+		if (!context.only?.intersects(codeActionKind)) {
 			return [];
 		}
-		const action = new vscode.CodeAction(
+		const mainAction = new vscode.CodeAction(
 			'Apply all configured replacements',
 			codeActionKind,
 
@@ -62,8 +62,8 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 			command: 'better-replace-on-save.applyReplacements',
 			title: 'Apply configured replacements'
 		};
-    let actions;
-    if (context.only && context.only.contains(codeActionKind)) {
+		let actions: vscode.CodeAction[];
+		if (context.only && context.only.contains(codeActionKind)) {
 			actions = [mainAction];
 		} else {
 			actions = [];
@@ -74,7 +74,7 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 
 		const subActions = replacements.flatMap((replacement) => {
 			if (replacement.id !== undefined && typeof replacement.id === 'string') {
-        const subActionKind = codeActionKind.append(replacement.id);
+				const subActionKind = codeActionKind.append(replacement.id);
 				const subAction = new vscode.CodeAction(
 					'Apply all configured replacements',
 					subActionKind,
@@ -84,11 +84,11 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 					title: 'Apply specific replacement',
 					arguments: [replacement.id], // TODO: untested
 				};
-        if (context.only && context.only.contains(subActionKind)) {
-          return [subAction];
-        }
+				if (context.only && context.only.contains(subActionKind)) {
+					return [subAction];
+				}
 			}
-      return [];
+			return [];
 		});
       
 		return [...actions, ...subActions];
