@@ -19,7 +19,8 @@
     "commands": [
       {
         "command": "better-replace-on-save.applyReplacements",
-        "title": "Apply Replacements"
+        "title": "Apply Replacements",
+        "$comment": "TODO: Add 'Apply Specific Replacement' below"
       }
     ],
     "configuration": {
@@ -48,7 +49,8 @@
                 "items": {
                   "type": "string"
                 }
-              }
+              },
+              "$comment": "TODO: Add 'id' field"
             }
           },
           "default": [],
