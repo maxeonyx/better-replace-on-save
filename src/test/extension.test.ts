@@ -30,6 +30,35 @@ suite('Extension Test Suite', () => {
 		return doc;
 	}
 
+	test('Replacement takes effect on save when appropriately configured', async () => {
+		// 1. Configure the replacements
+		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
+			{
+				search: 'testText',
+				replace: 'replacedText'
+			}
+		], vscode.ConfigurationTarget.Global);
+
+		// 2. Configure codeActionsOnSave to include our command
+		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {
+			'source.applyReplacements': true
+		}, vscode.ConfigurationTarget.Global);
+
+		// 3. Create and open test file
+		const doc = await createTestFile('on-save.testfile.txt', 'This is testText that should be replaced');
+
+		// 4. Save the document - this should trigger our code action
+		await vscode.commands.executeCommand('workbench.action.files.save');
+
+		// 5. Verify the content was updated
+		const updatedContent = doc.getText();
+		assert.strictEqual(updatedContent, 'This is replacedText that should be replaced');
+
+		// 6. Clean up the codeActionsOnSave configuration
+		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {},
+			vscode.ConfigurationTarget.Global);
+	});
+
 	test('Basic replacement works', async () => {
 		// Setup test configuration
 		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
@@ -115,35 +144,6 @@ suite('Extension Test Suite', () => {
 		await vscode.commands.executeCommand('better-replace-on-save.applyReplacements');
 
 		// No assertions needed - we're just checking that it doesn't throw
-	});
-
-	test('Replacement takes effect on save when appropriately configured', async () => {
-		// 1. Configure the replacements
-		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
-			{
-				search: 'testText',
-				replace: 'replacedText'
-			}
-		], vscode.ConfigurationTarget.Global);
-
-		// 2. Configure codeActionsOnSave to include our command
-		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {
-			'source.applyReplacements': true
-		}, vscode.ConfigurationTarget.Global);
-
-		// 3. Create and open test file
-		const doc = await createTestFile('on-save.testfile.txt', 'This is testText that should be replaced');
-
-		// 4. Save the document - this should trigger our code action
-		await vscode.commands.executeCommand('workbench.action.files.save');
-
-		// 5. Verify the content was updated
-		const updatedContent = doc.getText();
-		assert.strictEqual(updatedContent, 'This is replacedText that should be replaced');
-
-		// 6. Clean up the codeActionsOnSave configuration
-		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {},
-			vscode.ConfigurationTarget.Global);
 	});
 
 });
