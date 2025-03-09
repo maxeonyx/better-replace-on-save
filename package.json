@@ -19,8 +19,11 @@
     "commands": [
       {
         "command": "better-replace-on-save.applyReplacements",
-        "title": "Apply Replacements",
-        "$comment": "TODO: Add 'Apply Specific Replacement' below"
+        "title": "Apply Replacements"
+      },
+      {
+        "command": "better-replace-on-save.applySpecificReplacement",
+        "title": "Apply Specific Replacement"
       }
     ],
     "configuration": {
@@ -50,7 +53,10 @@
                   "type": "string"
                 }
               },
-              "$comment": "TODO: Add 'id' field"
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the replacement pattern"
+              }
             }
           },
           "default": [],

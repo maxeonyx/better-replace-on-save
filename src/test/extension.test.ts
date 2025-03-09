@@ -147,15 +147,81 @@ suite('Extension Test Suite', () => {
 	});
 
 	test("Specific replacement command works when called directly", async () => {
+		// Setup test configuration with multiple replacements with IDs
+		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
+			{
+				id: 'replacement1',
+				search: 'foo',
+				replace: 'bar'
+			},
+			{
+				id: 'replacement2',
+				search: 'hello',
+				replace: 'world'
+			}
+		], vscode.ConfigurationTarget.Global);
 
-		// TODO directly call better-replace-on-save.applySpecificReplacement
+		// Create and open test file
+		const doc = await createTestFile('specific.testfile.txt', 'This is foo and hello text');
 
+		// Execute the command with specific replacement ID
+		await vscode.commands.executeCommand('better-replace-on-save.applySpecificReplacement', 'replacement1');
+
+		// Verify only the specific replacement was applied
+		const updatedContent = doc.getText();
+		assert.strictEqual(updatedContent, 'This is bar and hello text');
+	});
+
+	test("Specific replacement command ignores language filter", async () => {
+		// Setup test configuration with language-specific replacement that has an ID
+		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
+			{
+				id: 'pythonReplace',
+				search: 'print\\(',
+				replace: 'logger.info(',
+				languages: ['python']
+			}
+		], vscode.ConfigurationTarget.Global);
+
+		// Create and open a JavaScript file (not Python)
+		const doc = await createTestFile('not-python.testfile.js', 'print("hello")');
+
+		// Apply the specific replacement - it should work even though the language doesn't match
+		await vscode.commands.executeCommand('better-replace-on-save.applySpecificReplacement', 'pythonReplace');
+
+		// Verify the replacement was applied despite language mismatch
+		const updatedContent = doc.getText();
+		assert.strictEqual(updatedContent, 'logger.info("hello")');
 	});
 
 	test("Specific replacement command works when configured as a code action", async () => {
+		// Setup test configuration with a replacement that has an ID
+		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
+			{
+				id: 'saveAction',
+				search: 'test',
+				replace: 'verified'
+			}
+		], vscode.ConfigurationTarget.Global);
 
-		// TODO test "on save" replace. Set up editor.codeActionsOnSave with a sub-action source.applyReplacements.replacementID
+		// Configure codeActionsOnSave to include our specific replacement ID
+		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {
+			'source.applyReplacements.saveAction': true
+		}, vscode.ConfigurationTarget.Global);
 
+		// Create and open test file
+		const doc = await createTestFile('save-action.testfile.txt', 'This is a test file');
+
+		// Save the document - this should trigger our specific code action
+		await vscode.commands.executeCommand('workbench.action.files.save');
+
+		// Verify the content was updated
+		const updatedContent = doc.getText();
+		assert.strictEqual(updatedContent, 'This is a verified file');
+
+		// Clean up the codeActionsOnSave configuration
+		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {},
+			vscode.ConfigurationTarget.Global);
 	});
 
 });
