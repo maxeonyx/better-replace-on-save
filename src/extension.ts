@@ -1,8 +1,8 @@
 // extension.ts
 import * as vscode from 'vscode';
 
-interface ReplacementConfig {
-	id: string | undefined;
+export interface ReplacementConfig {
+	id?: string;  // Make id optional with ? syntax instead of string | undefined
 	search: string;
 	replace: string;
 	languages?: string[];
