@@ -25,11 +25,12 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			await applyReplacements(editor);
+			// When run from code action (on save), respect language filters
+			await applyReplacements(editor, undefined, true);
 		})
 	);
 	context.subscriptions.push(
-		vscode.commands.registerCommand('better-replace-on-save.applySpecificReplacement', async (replacementId?: string) => {
+		vscode.commands.registerCommand('better-replace-on-save.applySpecificReplacement', async (replacementId?: string, isCodeAction?: boolean) => {
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
 				return;
@@ -64,9 +65,13 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				
 				replacementId = selected.replacementId;
+				// User-selected items are never from code actions
+				isCodeAction = false;
 			}
 			
-			await applyReplacements(editor, replacementId);
+			// When called from on-save code action, isCodeAction will be true (passed by CodeActionProvider)
+			// When called directly from command palette, isCodeAction will be undefined or false
+			await applyReplacements(editor, replacementId, !!isCodeAction);
 		})
 	);
 }
@@ -112,7 +117,7 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 				subAction.command = {
 					command: 'better-replace-on-save.applySpecificReplacement',
 					title: 'Apply specific replacement',
-					arguments: [replacement.id],
+					arguments: [replacement.id, true], // true indicates this is a code action
 				};
 				if (context.only && context.only.contains(subActionKind)) {
 					return [subAction];
@@ -125,7 +130,11 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 	}
 }
 
-async function applyReplacements(editor: vscode.TextEditor, specificReplacementId?: string): Promise<void> {
+async function applyReplacements(
+	editor: vscode.TextEditor, 
+	specificReplacementId?: string, 
+	isCodeAction: boolean = false
+): Promise<void> {
 	const config = vscode.workspace.getConfiguration('betterReplaceOnSave');
 	const replacements: ReplacementConfig[] = config.get('replacements') || [];
 	const document = editor.document;
@@ -134,14 +143,18 @@ async function applyReplacements(editor: vscode.TextEditor, specificReplacementI
 	// Filter replacements based on language and specific ID if provided
 	let applicableReplacements = replacements;
 	
-	// Filter by language if needed
-	if (!specificReplacementId) {
+	// Apply specific ID filter if specified
+	if (specificReplacementId) {
+		applicableReplacements = applicableReplacements.filter(r => r.id === specificReplacementId);
+	}
+	
+	// Apply language filter in two cases:
+	// 1. No specific ID was provided
+	// 2. A specific ID was provided AND this is a code action (e.g., on save)
+	if (!specificReplacementId || (specificReplacementId && isCodeAction)) {
 		applicableReplacements = applicableReplacements.filter(r =>
 			!r.languages || r.languages.includes(languageId)
 		);
-	} else {
-		// If a specific replacement ID was requested, only use that one and ignore language filter
-		applicableReplacements = applicableReplacements.filter(r => r.id === specificReplacementId);
 	}
 
 	if (applicableReplacements.length === 0) {
