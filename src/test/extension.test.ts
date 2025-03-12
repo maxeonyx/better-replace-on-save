@@ -224,4 +224,37 @@ suite('Extension Test Suite', () => {
 			vscode.ConfigurationTarget.Global);
 	});
 
+	test("Replacements with IDs should respect language when run as a code action", async () => {
+		// Setup test configuration with a replacement that has an ID and language filter
+		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
+			{
+				id: 'pythonReplace',
+				search: 'print\\(',
+				replace: 'logger.info(',
+				languages: ['python']
+			}
+		], vscode.ConfigurationTarget.Global);
+
+		// Configure codeActionsOnSave to include our specific replacement ID
+		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {
+			'source.applyReplacements.pythonReplace': true
+		}, vscode.ConfigurationTarget.Global);
+
+		// Test with matching language (python)
+		const pyDoc = await createTestFile('language-id.testfile.py', 'print("hello")');
+		await vscode.commands.executeCommand('workbench.action.files.save');
+		assert.strictEqual(pyDoc.getText(), 'logger.info("hello")', 
+			'Replacement should be applied on Python file');
+
+		// Test with non-matching language (javascript)
+		const jsDoc = await createTestFile('language-id.testfile.js', 'print("hello")');
+		await vscode.commands.executeCommand('workbench.action.files.save');
+		assert.strictEqual(jsDoc.getText(), 'print("hello")', 
+			'Replacement should not be applied on JavaScript file');
+
+		// Clean up the codeActionsOnSave configuration
+		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {},
+			vscode.ConfigurationTarget.Global);
+	});
+
 });
