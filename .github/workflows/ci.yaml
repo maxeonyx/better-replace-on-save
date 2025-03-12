@@ -52,7 +52,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    environment: published  # This is the key line!
+    environment: publish
 
     # Only run on main branch (not pull requests)
     if: github.ref == 'refs/heads/main'

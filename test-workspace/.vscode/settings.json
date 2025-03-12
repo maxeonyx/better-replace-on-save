@@ -1,0 +1,24 @@
+{
+    "betterReplaceOnSave.replacements": [
+        {
+            "id": "removehasheof",
+            "languages": [
+                "python",
+                "makefile"
+            ],
+            "search": "\n# EOF\n?",
+            "replace": ""
+        },
+        {
+            "id": "autoconst",
+            "languages": [
+                "javascript"
+            ],
+            "search": "let ",
+            "replace": "const "
+        }
+    ],
+    "editor.codeActionsOnSave": {
+        "source.applyReplacements": "explicit"
+    }
+}
