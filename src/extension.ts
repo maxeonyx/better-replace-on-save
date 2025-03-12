@@ -40,35 +40,35 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!replacementId) {
 				const config = vscode.workspace.getConfiguration('betterReplaceOnSave');
 				const replacements: ReplacementConfig[] = config.get('replacements') || [];
-				
+
 				// Filter replacements that have an ID
 				const replacementsWithIds = replacements.filter(r => r.id !== undefined);
-				
+
 				if (replacementsWithIds.length === 0) {
 					vscode.window.showInformationMessage('No replacement patterns with IDs configured.');
 					return;
 				}
-				
+
 				// Create quick pick items
 				const quickPickItems = replacementsWithIds.map(r => ({
 					label: r.id!,
 					description: `${r.search} → ${r.replace}`,
 					replacementId: r.id
 				}));
-				
+
 				const selected = await vscode.window.showQuickPick(quickPickItems, {
 					placeHolder: 'Select a replacement pattern to apply'
 				});
-				
+
 				if (!selected) {
 					return; // User canceled the selection
 				}
-				
+
 				replacementId = selected.replacementId;
 				// User-selected items are never from code actions
 				isCodeAction = false;
 			}
-			
+
 			// When called from on-save code action, isCodeAction will be true (passed by CodeActionProvider)
 			// When called directly from command palette, isCodeAction will be undefined or false
 			await applyReplacements(editor, replacementId, !!isCodeAction);
@@ -125,14 +125,14 @@ class ReplaceOnSaveCodeActionProvider implements vscode.CodeActionProvider {
 			}
 			return [];
 		});
-      
+
 		return [...actions, ...subActions];
 	}
 }
 
 async function applyReplacements(
-	editor: vscode.TextEditor, 
-	specificReplacementId?: string, 
+	editor: vscode.TextEditor,
+	specificReplacementId?: string,
 	isCodeAction: boolean = false
 ): Promise<void> {
 	const config = vscode.workspace.getConfiguration('betterReplaceOnSave');
@@ -142,12 +142,12 @@ async function applyReplacements(
 
 	// Filter replacements based on language and specific ID if provided
 	let applicableReplacements = replacements;
-	
+
 	// Apply specific ID filter if specified
 	if (specificReplacementId) {
 		applicableReplacements = applicableReplacements.filter(r => r.id === specificReplacementId);
 	}
-	
+
 	// Apply language filter in two cases:
 	// 1. No specific ID was provided
 	// 2. A specific ID was provided AND this is a code action (e.g., on save)
@@ -158,9 +158,6 @@ async function applyReplacements(
 	}
 
 	if (applicableReplacements.length === 0) {
-		if (specificReplacementId) {
-			vscode.window.showInformationMessage(`No replacement found with ID: ${specificReplacementId}`);
-		}
 		return;
 	}
 
