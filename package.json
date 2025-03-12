@@ -2,14 +2,24 @@
   "name": "better-replace-on-save",
   "displayName": "Better Replace-on-Save",
   "description": "Configurable search and replace on save - with proper VSCode integration.",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "publisher": "maxeonyx",
   "repository": "github:maxeonyx/better-replace-on-save",
   "engines": {
     "vscode": "^1.97.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Formatters"
+  ],
+  "keywords": [
+    "replace",
+    "replace-on-save",
+    "search",
+    "regex",
+    "transformation",
+    "code-actions",
+    "formatting"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -19,11 +29,14 @@
     "commands": [
       {
         "command": "better-replace-on-save.applyReplacements",
-        "title": "Apply Replacements"
+        "title": "Apply Replacements",
+        "category": "Better Replace-on-Save"
       },
       {
         "command": "better-replace-on-save.applySpecificReplacement",
-        "title": "Apply Specific Replacement"
+        "title": "Apply Specific Replacement",
+        "category": "Better Replace-on-Save",
+        "description": "Apply a single replacement rule by ID, with optional language filter override"
       }
     ],
     "configuration": {
@@ -40,11 +53,11 @@
             "properties": {
               "search": {
                 "type": "string",
-                "description": "The string or regex pattern to search for"
+                "description": "The string (regex pattern) to search for."
               },
               "replace": {
                 "type": "string",
-                "description": "The replacement string"
+                "description": "The replacement string."
               },
               "languages": {
                 "type": "array",
@@ -55,12 +68,12 @@
               },
               "id": {
                 "type": "string",
-                "description": "Unique identifier for the replacement pattern"
+                "description": "Unique identifier for the replacement pattern. Enables specific code actions (source.applyReplacements.[id]) and allows applying individual replacements via command palette."
               }
             }
           },
           "default": [],
-          "description": "Array of search and replace configurations"
+          "description": "Array of search and replace configurations. Example: [{\"search\": \"hello\", \"replace\": \"world\"}"
         }
       }
     }

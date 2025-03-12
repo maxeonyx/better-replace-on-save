@@ -26,7 +26,19 @@ Fix extension not activating on startup.
 
 ## 0.2.0
 
-Support for "Apply specific replacement":
+### Added ID-based replacements and specific replacement functionality:
 
-- Each replacement with `"id": "subActionID"` will get an associated `source.applyReplacements.subActionID` code action subtype. This can be used eg. in the `editor.codeActionsOnSave` setting.
-- There is a new command available in the command pallete: "Apply Specific Replacement"
+- **ID-based replacements**: Configure replacements with unique IDs using the `id` property
+  - Each replacement with `"id": "subActionID"` gets an associated `source.applyReplacements.subActionID` code action
+  - This enables fine-grained control in `editor.codeActionsOnSave` settings
+
+- **Specific replacement command**: New command `better-replace-on-save.applySpecificReplacement` ("Apply Specific Replacement")
+  - Execute from command palette to apply a single replacement by ID
+  - Includes a quick pick UI to select from available replacements when no ID is provided directly
+
+- **Context-aware language filtering**:
+  - When run as code actions (on save): ID-based replacements respect language filters
+  - When run as direct commands: ID-based replacements ignore language filters
+  - This provides flexibility to manually apply replacements across any file type
+
+- **Enhanced documentation**: Updated README with examples and usage instructions for the new features
