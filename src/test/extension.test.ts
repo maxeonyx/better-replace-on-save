@@ -256,5 +256,27 @@ suite('Extension Test Suite', () => {
 		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {},
 			vscode.ConfigurationTarget.Global);
 	});
+	
+	test("Replacements with IDs should NOT respect language when run as a command", async () => {
+		// Setup test configuration with a replacement that has an ID and language filter
+		await vscode.workspace.getConfiguration('betterReplaceOnSave').update('replacements', [
+			{
+				id: 'pythonReplace',
+				search: 'print\\(',
+				replace: 'logger.info(',
+				languages: ['python']
+			}
+		], vscode.ConfigurationTarget.Global);
+
+		// Create a JavaScript file (not Python)
+		const jsDoc = await createTestFile('direct-command.testfile.js', 'print("hello")');
+		
+		// Apply the specific replacement directly as a command - it should ignore the language filter
+		await vscode.commands.executeCommand('better-replace-on-save.applySpecificReplacement', 'pythonReplace');
+
+		// Verify the replacement was applied despite language mismatch
+		assert.strictEqual(jsDoc.getText(), 'logger.info("hello")', 
+			'Replacement should be applied despite language mismatch when run as direct command');
+	});
 
 });
