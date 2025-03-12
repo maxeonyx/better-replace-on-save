@@ -18,12 +18,21 @@ eg.
 
 ## Features
 
-This extension adds a `source.applyReplacements` CodeActions provider which can be used in eg. the `editor.codeActionsOnSave` setting.
+### General Features
 
-It adds a command `better-replace-on-save.applyReplacements ("Apply Replacements")` that can be executed from the command pallete.
+- `source.applyReplacements` CodeActions provider which can be used in the `editor.codeActionsOnSave` setting
+- Command `better-replace-on-save.applyReplacements` ("Apply Replacements") that can be executed from the command palette
+- Language-specific replacements that only apply to files of specified languages
+- Comprehensive settings documentation with VS Code IntelliSense support
 
-Lastly, it correctly documents its settings in the `package.json` so that VSCode can provide code completion to the user.
+### ID-Based Replacements (New in 0.2.0)
 
+- Configure replacements with unique IDs to apply them individually
+- Each ID-based replacement gets its own code action that can be used in `editor.codeActionsOnSave`
+- Command `better-replace-on-save.applySpecificReplacement` ("Apply Specific Replacement") to run a single replacement by ID
+- Context-aware language filtering:
+  - ID-based replacements respect language filters when run as code actions (on save)
+  - ID-based replacements ignore language filters when run as direct commands (giving you flexibility to override language constraints when needed)
 
 ## Extension Settings
 
@@ -42,11 +51,40 @@ Configure your replacements using the following settings:
       "search": "let",
       "replace": "const",
       "languages": [ "typescript", "javascript" ] // Optional
+    },
+    {
+      "id": "convertPrint", // Optional: enables specific replacement functionality
+      "search": "print\\(",
+      "replace": "logger.info(",
+      "languages": [ "python" ] // Optional
     }
   ]
   // ...
 }
 ```
+
+### Applying Specific Replacements on Save
+
+You can configure VS Code to run only specific replacements on save:
+
+```json
+{
+  "editor.codeActionsOnSave": {
+    // Apply a specific replacement with ID "convertPrint"
+    "source.applyReplacements.convertPrint": true
+  }
+}
+```
+
+### Applying Specific Replacements Manually
+
+To apply a specific replacement manually:
+
+1. Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac)
+2. Search for "Apply Specific Replacement" 
+3. Select the replacement by ID from the dropdown
+
+This is particularly useful when you want to apply a replacement regardless of language restrictions.
 
 <!--
 ## Known Issues
