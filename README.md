@@ -1,6 +1,8 @@
 
 # Better Replace-On-Save
 
+![Better Replace-On-Save icon](icon.png)
+
 Replace-on-save with better VSCode integration.
 
 This extension adds the ability to run regex replacements as a code action (it does not strictly have to be "on save")
@@ -103,6 +105,10 @@ Initial release
 ### 0.2.0
 
 Support for specific replacement code actions, and "Apply specific replacement" command.
+
+### 0.2.1
+
+- Added extension icon
 
 ---
 
