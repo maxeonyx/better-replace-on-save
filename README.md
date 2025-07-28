@@ -58,9 +58,40 @@ Configure your replacements using the following settings:
       "replace": "logger.info(",
       "languages": [ "python" ] // Optional
     }
+  ],
+  "betterReplaceOnSave.replacementsFiles": [
+    // Optional: Load additional replacements from external files
+    "betterReplaceOnSave.json",
+    "configs/python-replacements.json"
   ]
   // ...
 }
+```
+
+### External Replacement Files (New in 0.3.0)
+
+You can organize your replacements into separate files to avoid cluttering your settings.json:
+
+- Use the `betterReplaceOnSave.replacementsFiles` setting to specify file paths
+- Paths can be relative to your workspace root or absolute
+- Files should contain JSON arrays of replacement objects with the same format as the `replacements` setting
+- External file replacements are merged with settings-based replacements
+- Files are automatically watched for changes and reloaded
+
+**Example replacement file (`betterReplaceOnSave.json`):**
+```json
+[
+  {
+    "id": "consoleToLogger",
+    "search": "console\\.log\\(",
+    "replace": "logger.info(",
+    "languages": ["javascript", "typescript"]
+  },
+  {
+    "search": "TODO:",
+    "replace": "FIXME:"
+  }
+]
 ```
 
 ### Applying Specific Replacements on Save
@@ -103,6 +134,10 @@ Initial release
 ### 0.2.0
 
 Support for specific replacement code actions, and "Apply specific replacement" command.
+
+### 0.3.0
+
+Support for external replacement files via `betterReplaceOnSave.replacementsFiles` configuration option.
 
 ---
 

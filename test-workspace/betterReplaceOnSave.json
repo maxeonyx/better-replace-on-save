@@ -1,0 +1,12 @@
+[
+  {
+    "id": "consoleToLogger",
+    "search": "console\\.log\\(",
+    "replace": "logger.info(",
+    "languages": ["javascript", "typescript"]
+  },
+  {
+    "search": "TODO:",
+    "replace": "FIXME:"
+  }
+]
