@@ -17,6 +17,8 @@ suite('Extension Test Suite', () => {
 		// Reset configuration after each test
 		await vscode.workspace.getConfiguration('betterReplaceOnSave')
 			.update('replacements', [], vscode.ConfigurationTarget.Global);
+		await vscode.workspace.getConfiguration('betterReplaceOnSave')
+			.update('replacementsFiles', [], vscode.ConfigurationTarget.Global);
 
 		// Reset code actions on save
 		await vscode.workspace.getConfiguration('editor').update('codeActionsOnSave', {},
@@ -38,6 +40,17 @@ suite('Extension Test Suite', () => {
 	async function configureReplacements(replacements: ReplacementConfig[]): Promise<void> {
 		await vscode.workspace.getConfiguration('betterReplaceOnSave')
 			.update('replacements', replacements, vscode.ConfigurationTarget.Global);
+	}
+
+	async function configureReplacementFiles(files: string[]): Promise<void> {
+		await vscode.workspace.getConfiguration('betterReplaceOnSave')
+			.update('replacementsFiles', files, vscode.ConfigurationTarget.Global);
+	}
+
+	async function createReplacementFile(fileName: string, replacements: ReplacementConfig[]): Promise<string> {
+		const filePath = path.join(workspaceFolder, fileName);
+		await fs.writeFile(filePath, JSON.stringify(replacements, null, 2), 'utf-8');
+		return filePath;
 	}
 
 	async function enableCodeActionsOnSave(codeActionConfig: object): Promise<void> {
@@ -72,7 +85,7 @@ suite('Extension Test Suite', () => {
 			}]);
 
 			const doc = await runCommandOnFile(
-				'basic.testfile.txt',
+				'basic-basic-replacement.testfile.txt',
 				'This is a foo test',
 				'better-replace-on-save.applyReplacements'
 			);
@@ -93,7 +106,7 @@ suite('Extension Test Suite', () => {
 			]);
 
 			const doc = await runCommandOnFile(
-				'multiple.testfile.txt',
+				'basic-multiple-replacements.testfile.txt',
 				'hello foo hello',
 				'better-replace-on-save.applyReplacements'
 			);
@@ -108,7 +121,7 @@ suite('Extension Test Suite', () => {
 			}]);
 
 			const doc = await runCommandOnFile(
-				'nomatch.testfile.txt',
+				'basic-no-match.testfile.txt',
 				'This content has no matches',
 				'better-replace-on-save.applyReplacements'
 			);
@@ -134,7 +147,7 @@ suite('Extension Test Suite', () => {
 
 			// Test with matching language (typescript)
 			const tsDoc = await runCommandOnFile(
-				'language.testfile.ts',
+				'langspec-language-ts.testfile.ts',
 				'console.log("test");',
 				'better-replace-on-save.applyReplacements'
 			);
@@ -142,7 +155,7 @@ suite('Extension Test Suite', () => {
 
 			// Test with non-matching language (javascript)
 			const jsDoc = await runCommandOnFile(
-				'language.testfile.js',
+				'langspec-language-js.testfile.js',
 				'console.log("test");',
 				'better-replace-on-save.applyReplacements'
 			);
@@ -162,7 +175,7 @@ suite('Extension Test Suite', () => {
 				'source.applyReplacements': true
 			});
 
-			const doc = await saveFile('on-save.testfile.txt', 'This is testText that should be replaced');
+			const doc = await saveFile('codeactions-on-save.testfile.txt', 'This is testText that should be replaced');
 			await assertReplacement(doc, 'This is replacedText that should be replaced');
 		});
 
@@ -177,7 +190,7 @@ suite('Extension Test Suite', () => {
 				'source.applyReplacements.saveAction': true
 			});
 
-			const doc = await saveFile('save-action.testfile.txt', 'This is a test file');
+			const doc = await saveFile('codeactions-save-action.testfile.txt', 'This is a test file');
 			await assertReplacement(doc, 'This is a verified file');
 		});
 	});
@@ -198,7 +211,7 @@ suite('Extension Test Suite', () => {
 			]);
 
 			const doc = await runCommandOnFile(
-				'specific.testfile.txt',
+				'id-specific-replacement.testfile.txt',
 				'This is foo and hello text',
 				'better-replace-on-save.applySpecificReplacement',
 				'replacement1'
@@ -216,7 +229,7 @@ suite('Extension Test Suite', () => {
 			}]);
 
 			const jsDoc = await runCommandOnFile(
-				'direct-command.testfile.js',
+				'id-direct-command.testfile.js',
 				'print("hello")',
 				'better-replace-on-save.applySpecificReplacement',
 				'pythonReplace'
@@ -239,14 +252,137 @@ suite('Extension Test Suite', () => {
 			});
 
 			// Test with matching language (python)
-			const pyDoc = await saveFile('language-id.testfile.py', 'print("hello")');
+			const pyDoc = await saveFile('id-language-id-py.testfile.py', 'print("hello")');
 			await assertReplacement(pyDoc, 'logger.info("hello")',
 				'Replacement should be applied on Python file');
 
 			// Test with non-matching language (javascript)
-			const jsDoc = await saveFile('language-id.testfile.js', 'print("hello")');
+			const jsDoc = await saveFile('id-language-id-js.testfile.js', 'print("hello")');
 			await assertReplacement(jsDoc, 'print("hello")',
 				'Replacement should not be applied on JavaScript file');
+		});
+	});
+
+	suite('Replacements Files functionality', () => {
+		test('Load replacements from external file', async () => {
+			// Create a replacement file
+			const replacements = [
+				{
+					search: 'external',
+					replace: 'loaded'
+				}
+			];
+			await createReplacementFile('replfiles-load-external-replacements.json', replacements);
+
+			// Configure to use the file
+			await configureReplacementFiles(['replfiles-load-external-replacements.json']);
+
+			const doc = await runCommandOnFile(
+				'replfiles-load-external.testfile.txt',
+				'This is external content',
+				'better-replace-on-save.applyReplacements'
+			);
+
+			await assertReplacement(doc, 'This is loaded content');
+		});
+
+		test('Merge settings and file-based replacements', async () => {
+			// Configure settings-based replacement
+			await configureReplacements([{
+				search: 'settings',
+				replace: 'config'
+			}]);
+
+			// Create file-based replacement
+			const fileReplacements = [
+				{
+					search: 'file',
+					replace: 'external'
+				}
+			];
+			await createReplacementFile('replfiles-merge-settings-file.json', fileReplacements);
+			await configureReplacementFiles(['replfiles-merge-settings-file.json']);
+
+			const doc = await runCommandOnFile(
+				'replfiles-merge-settings-file.testfile.txt',
+				'This has settings and file content',
+				'better-replace-on-save.applyReplacements'
+			);
+
+			await assertReplacement(doc, 'This has config and external content');
+		});
+
+		test('Handle multiple replacement files', async () => {
+			// Create first replacement file
+			const replacements1 = [{ search: 'first', replace: '1st' }];
+			await createReplacementFile('replfiles-multiple-files-1.json', replacements1);
+
+			// Create second replacement file
+			const replacements2 = [{ search: 'second', replace: '2nd' }];
+			await createReplacementFile('replfiles-multiple-files-2.json', replacements2);
+
+			// Configure to use both files
+			await configureReplacementFiles(['replfiles-multiple-files-1.json', 'replfiles-multiple-files-2.json']);
+
+			const doc = await runCommandOnFile(
+				'replfiles-multiple-files.testfile.txt',
+				'This is first and second content',
+				'better-replace-on-save.applyReplacements'
+			);
+
+			await assertReplacement(doc, 'This is 1st and 2nd content');
+		});
+
+		test('Handle missing replacement file gracefully', async () => {
+			// Configure to use a non-existent file
+			await configureReplacementFiles(['replfiles-missing-file.json']);
+
+			const doc = await runCommandOnFile(
+				'replfiles-missing-file.testfile.txt',
+				'This content should not change',
+				'better-replace-on-save.applyReplacements'
+			);
+
+			await assertReplacement(doc, 'This content should not change');
+		});
+
+		test('Handle invalid JSON file gracefully', async () => {
+			// Create an invalid JSON file
+			const invalidFilePath = path.join(workspaceFolder, 'replfiles-invalid-json.json');
+			await fs.writeFile(invalidFilePath, '{ invalid json }', 'utf-8');
+
+			// Configure to use the invalid file
+			await configureReplacementFiles(['replfiles-invalid-json.json']);
+
+			const doc = await runCommandOnFile(
+				'replfiles-invalid-json.testfile.txt',
+				'This content should not change',
+				'better-replace-on-save.applyReplacements'
+			);
+
+			await assertReplacement(doc, 'This content should not change');
+		});
+
+		test('ID-based replacement from external file works', async () => {
+			// Create replacement file with ID
+			const replacements = [
+				{
+					id: 'fileReplace',
+					search: 'original',
+					replace: 'modified'
+				}
+			];
+			await createReplacementFile('replfiles-id-external.json', replacements);
+			await configureReplacementFiles(['replfiles-id-external.json']);
+
+			const doc = await runCommandOnFile(
+				'replfiles-id-external.testfile.txt',
+				'This is original text',
+				'better-replace-on-save.applySpecificReplacement',
+				'fileReplace'
+			);
+
+			await assertReplacement(doc, 'This is modified text');
 		});
 	});
 });

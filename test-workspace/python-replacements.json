@@ -1,0 +1,8 @@
+[
+  {
+    "id": "pythonPrint",
+    "search": "print\\(",
+    "replace": "logger.debug(",
+    "languages": ["python"]
+  }
+]

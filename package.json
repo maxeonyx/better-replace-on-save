@@ -2,7 +2,7 @@
   "name": "better-replace-on-save",
   "displayName": "Better Replace-on-Save",
   "description": "Configurable search and replace on save - with proper VSCode integration.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "maxeonyx",
   "repository": "github:maxeonyx/better-replace-on-save",
   "engines": {
@@ -74,6 +74,14 @@
           },
           "default": [],
           "description": "Array of search and replace configurations. Example: [{\"search\": \"hello\", \"replace\": \"world\"}"
+        },
+        "betterReplaceOnSave.replacementsFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Array of file paths containing replacement configurations. Files should contain JSON arrays of replacement objects with the same format as the replacements setting. Paths can be relative to workspace root or absolute."
         }
       }
     }

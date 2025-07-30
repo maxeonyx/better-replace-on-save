@@ -18,6 +18,10 @@
             "replace": "const "
         }
     ],
+    "betterReplaceOnSave.replacementsFiles": [
+        "betterReplaceOnSave.json",
+        "python-replacements.json"
+    ],
     "editor.codeActionsOnSave": {
         "source.applyReplacements": "explicit"
     }
