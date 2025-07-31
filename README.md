@@ -141,10 +141,6 @@ Support for specific replacement code actions, and "Apply specific replacement" 
 
 Support for external replacement files via `betterReplaceOnSave.replacementsFiles` configuration option.
 
-### 0.3.1
-
-Added extension icon
-
 ---
 
 **Enjoy!**
