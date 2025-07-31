@@ -1,9 +1,4 @@
 # Change Log
-
-## 0.2.1
-
-- Added extension icon
-
 ## 0.1.0
 
 Initial release:
@@ -46,3 +41,20 @@ Fix extension not activating on startup.
   - This provides flexibility to manually apply replacements across any file type
 
 - **Enhanced documentation**: Updated README with examples and usage instructions for the new features
+
+## 0.3.0
+
+### Added `replacementsFiles` option for external configuration files.
+
+You can organize your replacements into separate files to avoid cluttering your settings.json:
+
+- Use the `betterReplaceOnSave.replacementsFiles` setting to specify file paths
+- Paths can be relative to your workspace root or absolute
+- Files should contain JSON arrays of replacement objects with the same format as the `replacements` setting
+- External file replacements are merged with settings-based replacements
+- Files are automatically watched for changes and reloaded
+
+## 0.3.1
+
+Added extension icon
+
