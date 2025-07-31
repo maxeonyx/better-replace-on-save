@@ -48,6 +48,9 @@ function expandVariables(filePath: string): string {
 		return envValue;
 	});
 
+	// Normalize the path to handle any consecutive slashes
+	expandedPath = path.normalize(expandedPath);
+
 	return expandedPath;
 }
 
