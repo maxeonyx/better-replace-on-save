@@ -82,7 +82,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Array of file paths containing replacement configurations. Files should contain JSON arrays of replacement objects with the same format as the replacements setting. Paths can be relative to workspace root or absolute."
+          "description": "Array of file paths containing replacement configurations. Files should contain JSON arrays of replacement objects with the same format as the replacements setting. Paths can be relative to workspace root, absolute, or use variables: ~/path (user home), ${userHome}/path (user home), ${env:VARIABLE_NAME}/path (environment variable)."
         }
       }
     }

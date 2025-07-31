@@ -2,6 +2,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 
 export interface ReplacementConfig {
 	id?: string;  // Make id optional with ? syntax instead of string | undefined
@@ -10,21 +11,59 @@ export interface ReplacementConfig {
 	languages?: string[];
 }
 
+// Export for testing
+export { expandVariables };
+
 // Global cache for merged replacements and file watchers
 let cachedReplacements: ReplacementConfig[] = [];
 let fileWatchers: vscode.FileSystemWatcher[] = [];
+
+/**
+ * Expand variables in file paths
+ * Supports:
+ * - ~/path -> {userHome}/path
+ * - ${userHome}/path -> {userHome}/path
+ * - ${env:VARIABLE_NAME}/path -> value of environment variable
+ */
+function expandVariables(filePath: string): string {
+	let expandedPath = filePath;
+
+	// Handle ~/path syntax
+	if (expandedPath.startsWith('~/')) {
+		expandedPath = path.join(os.homedir(), expandedPath.slice(2));
+	}
+	// Handle ${userHome} variable
+	else if (expandedPath.includes('${userHome}')) {
+		expandedPath = expandedPath.replace(/\$\{userHome\}/g, os.homedir());
+	}
+
+	// Handle ${env:VARIABLE_NAME} variables
+	const envVarRegex = /\$\{env:([^}]+)\}/g;
+	expandedPath = expandedPath.replace(envVarRegex, (match, varName) => {
+		const envValue = process.env[varName];
+		if (envValue === undefined) {
+			console.warn(`Better Replace-on-Save: Environment variable ${varName} is not defined, keeping original path: ${match}`);
+			return match; // Keep original if environment variable is not found
+		}
+		return envValue;
+	});
+
+	return expandedPath;
+}
 
 /**
  * Load replacements from an external file
  */
 async function loadReplacementsFromFile(filePath: string): Promise<ReplacementConfig[]> {
 	try {
-		// Resolve relative paths relative to workspace root
-		let resolvedPath = filePath;
-		if (!path.isAbsolute(filePath)) {
+		// First, expand variables in the file path
+		let resolvedPath = expandVariables(filePath);
+		
+		// Then resolve relative paths relative to workspace root
+		if (!path.isAbsolute(resolvedPath)) {
 			const workspaceFolders = vscode.workspace.workspaceFolders;
 			if (workspaceFolders && workspaceFolders.length > 0) {
-				resolvedPath = path.join(workspaceFolders[0].uri.fsPath, filePath);
+				resolvedPath = path.join(workspaceFolders[0].uri.fsPath, resolvedPath);
 			}
 		}
 
@@ -98,12 +137,12 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 	const replacementFiles: string[] = config.get('replacementsFiles') || [];
 
 	for (const filePath of replacementFiles) {
-		// Resolve relative paths
-		let resolvedPath = filePath;
-		if (!path.isAbsolute(filePath)) {
+		// Expand variables and resolve relative paths
+		let resolvedPath = expandVariables(filePath);
+		if (!path.isAbsolute(resolvedPath)) {
 			const workspaceFolders = vscode.workspace.workspaceFolders;
 			if (workspaceFolders && workspaceFolders.length > 0) {
-				resolvedPath = path.join(workspaceFolders[0].uri.fsPath, filePath);
+				resolvedPath = path.join(workspaceFolders[0].uri.fsPath, resolvedPath);
 			}
 		}
 
