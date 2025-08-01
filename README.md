@@ -133,7 +133,7 @@ You can configure VS Code to run only specific replacements on save:
 To apply a specific replacement manually:
 
 1. Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac)
-2. Search for "Apply Specific Replacement" 
+2. Search for "Apply Specific Replacement"
 3. Select the replacement by ID from the dropdown
 
 This is particularly useful when you want to apply a replacement regardless of language restrictions.
@@ -163,6 +163,8 @@ Support for external replacement files via `betterReplaceOnSave.replacementsFile
 ### 0.4.0
 
 Support for user home directory variables in `betterReplaceOnSave.replacementsFiles`. You can now use `~/path`, `${userHome}/path`, `${env:HOME}/path`, `${env:UserProfile}/path`, or `${env:VARIABLE_NAME}/path` in file paths.
+
+NOTE: *File watch is not supported for files outside the workspace root. Reload the window to apply changes to these files.*
 
 ---
 

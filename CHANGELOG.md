@@ -65,9 +65,10 @@ Added extension icon
 Added support for user home directory and environment variables in `betterReplaceOnSave.replacementsFiles` paths:
 
 - **Tilde expansion**: `~/path` expands to user home directory
-- **User home variable**: `${userHome}/path` expands to user home directory  
+- **User home variable**: `${userHome}/path` expands to user home directory
 - **Environment variables**: `${env:VARIABLE_NAME}/path` expands any environment variable
 - **Cross-platform support**: `${env:HOME}` (Unix/Linux/Mac) and `${env:UserProfile}` (Windows)
 - **Graceful handling**: Undefined environment variables are left as-is with a warning
 - **Path normalization**: Prevents issues with consecutive slashes in expanded paths
 
+**Known limitation**: File watching is not supported for files outside the workspace root. Reload the window to apply changes to these files.
