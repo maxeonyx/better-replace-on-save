@@ -2,7 +2,7 @@
   "name": "better-replace-on-save",
   "displayName": "Better Replace-on-Save",
   "description": "Configurable search and replace on save - with proper VSCode integration.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "maxeonyx",
   "repository": "https://github.com/maxeonyx/better-replace-on-save",
   "icon": "icon.png",
