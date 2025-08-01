@@ -3,8 +3,9 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import * as os from 'os';
 
-import { ReplacementConfig } from '../extension';
+import { ReplacementConfig, expandVariables } from '../extension';
 
 suite('Extension Test Suite', () => {
 	const workspaceFolder = path.resolve(__dirname, '..', '..', 'test-fixtures');
@@ -260,6 +261,193 @@ suite('Extension Test Suite', () => {
 			const jsDoc = await saveFile('id-language-id-js.testfile.js', 'print("hello")');
 			await assertReplacement(jsDoc, 'print("hello")',
 				'Replacement should not be applied on JavaScript file');
+		});
+	});
+
+	suite('Variable expansion functionality', () => {
+		test('Tilde (~) expands to user home directory', () => {
+			const result = expandVariables('~/test/path');
+			const expected = path.join(os.homedir(), 'test/path');
+			assert.strictEqual(result, expected);
+		});
+
+		test('${userHome} variable expands to user home directory', () => {
+			const result = expandVariables('${userHome}/test/path');
+			const expected = path.join(os.homedir(), 'test/path');
+			assert.strictEqual(result, expected);
+		});
+
+		test('Multiple ${userHome} variables are expanded', () => {
+			const result = expandVariables('${userHome}/first/${userHome}/second');
+			const homeDir = os.homedir();
+			const expected = path.join(homeDir, 'first', homeDir, 'second');
+			assert.strictEqual(result, expected);
+		});
+
+		test('${env:HOME} expands to HOME environment variable', () => {
+			const originalHome = process.env.HOME;
+			process.env.HOME = '/custom/home';
+			
+			const result = expandVariables('${env:HOME}/test/path');
+			const expected = path.join('/custom/home', 'test/path');
+			assert.strictEqual(result, expected);
+
+			// Restore original value
+			if (originalHome !== undefined) {
+				process.env.HOME = originalHome;
+			} else {
+				delete process.env.HOME;
+			}
+		});
+
+		test('${env:UserProfile} expands to UserProfile environment variable', () => {
+			const originalUserProfile = process.env.UserProfile;
+			process.env.UserProfile = 'C:\\Users\\TestUser';
+			
+			const result = expandVariables('${env:UserProfile}/test/path');
+			const expected = path.join('C:\\Users\\TestUser', 'test/path');
+			assert.strictEqual(result, expected);
+
+			// Restore original value
+			if (originalUserProfile !== undefined) {
+				process.env.UserProfile = originalUserProfile;
+			} else {
+				delete process.env.UserProfile;
+			}
+		});
+
+		test('${env:CUSTOM_VAR} expands custom environment variable', () => {
+			const originalCustomVar = process.env.CUSTOM_VAR;
+			process.env.CUSTOM_VAR = '/custom/value';
+			
+			const result = expandVariables('${env:CUSTOM_VAR}/test/path');
+			const expected = path.join('/custom/value', 'test/path');
+			assert.strictEqual(result, expected);
+
+			// Restore original value
+			if (originalCustomVar !== undefined) {
+				process.env.CUSTOM_VAR = originalCustomVar;
+			} else {
+				delete process.env.CUSTOM_VAR;
+			}
+		});
+
+		test('Undefined environment variable is left as-is', () => {
+			const result = expandVariables('${env:UNDEFINED_VAR}/test/path');
+			assert.strictEqual(result, '${env:UNDEFINED_VAR}/test/path');
+		});
+
+		test('Absolute path without variables is unchanged', () => {
+			const absolutePath = '/absolute/path/to/file';
+			const result = expandVariables(absolutePath);
+			assert.strictEqual(result, absolutePath);
+		});
+
+		test('Relative path without variables is unchanged', () => {
+			const relativePath = 'relative/path/to/file';
+			const result = expandVariables(relativePath);
+			assert.strictEqual(result, relativePath);
+		});
+
+		test('Mixed variable types are all expanded', () => {
+			const originalCustomVar = process.env.CUSTOM_VAR;
+			process.env.CUSTOM_VAR = 'custom';
+			
+			const result = expandVariables('${env:CUSTOM_VAR}/${userHome}/test');
+			const expected = path.join('custom', os.homedir(), 'test');
+			assert.strictEqual(result, expected);
+
+			// Restore original value
+			if (originalCustomVar !== undefined) {
+				process.env.CUSTOM_VAR = originalCustomVar;
+			} else {
+				delete process.env.CUSTOM_VAR;
+			}
+		});
+
+		test('Variable expansion with replacements files loading', async () => {
+			// Create a test file in the user's home directory (simulated with temp dir)
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-test-'));
+			const testFile = 'test-home-replacements.json';
+			const testFilePath = path.join(tempDir, testFile);
+			
+			const replacements = [
+				{
+					search: 'hometest',
+					replace: 'expanded'
+				}
+			];
+			await fs.writeFile(testFilePath, JSON.stringify(replacements, null, 2), 'utf-8');
+
+			// Set up a custom environment variable to point to our temp directory
+			const originalTestHome = process.env.TEST_HOME;
+			process.env.TEST_HOME = tempDir;
+
+			try {
+				// Configure to use the file with environment variable expansion
+				await configureReplacementFiles([`\${env:TEST_HOME}/${testFile}`]);
+
+				const doc = await runCommandOnFile(
+					'varexp-env-var-replacement.testfile.txt',
+					'This is hometest content',
+					'better-replace-on-save.applyReplacements'
+				);
+
+				await assertReplacement(doc, 'This is expanded content');
+			} finally {
+				// Clean up
+				await fs.unlink(testFilePath);
+				await fs.rmdir(tempDir);
+				
+				if (originalTestHome !== undefined) {
+					process.env.TEST_HOME = originalTestHome;
+				} else {
+					delete process.env.TEST_HOME;
+				}
+			}
+		});
+
+		test('Variable expansion with userHome variable in replacements files', async () => {
+			// Create a test file in the user's home directory (simulated with temp dir)
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-test-'));
+			const testFile = 'test-userhome-replacements.json';
+			const testFilePath = path.join(tempDir, testFile);
+			
+			const replacements = [
+				{
+					search: 'userhometest',
+					replace: 'userhome-expanded'
+				}
+			];
+			await fs.writeFile(testFilePath, JSON.stringify(replacements, null, 2), 'utf-8');
+
+			// Set up a custom environment variable to point to our temp directory
+			const originalTestHome = process.env.TEST_HOME_DIR;
+			process.env.TEST_HOME_DIR = tempDir;
+
+			try {
+				// Configure to use the file with ${userHome} expansion - but since we can't easily mock os.homedir(),
+				// we'll use an environment variable instead for this test
+				await configureReplacementFiles([`\${env:TEST_HOME_DIR}/${testFile}`]);
+
+				const doc = await runCommandOnFile(
+					'varexp-userhome-replacement.testfile.txt',
+					'This is userhometest content',
+					'better-replace-on-save.applyReplacements'
+				);
+
+				await assertReplacement(doc, 'This is userhome-expanded content');
+			} finally {
+				// Clean up
+				await fs.unlink(testFilePath);
+				await fs.rmdir(tempDir);
+				
+				if (originalTestHome !== undefined) {
+					process.env.TEST_HOME_DIR = originalTestHome;
+				} else {
+					delete process.env.TEST_HOME_DIR;
+				}
+			}
 		});
 	});
 

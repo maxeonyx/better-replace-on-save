@@ -64,7 +64,12 @@ Configure your replacements using the following settings:
   "betterReplaceOnSave.replacementsFiles": [
     // Optional: Load additional replacements from external files
     "betterReplaceOnSave.json",
-    "configs/python-replacements.json"
+    "configs/python-replacements.json",
+    // Variables are supported for user home directory:
+    "~/dotfiles/vscode/betterReplaceOnSave.json",
+    "${userHome}/.config/vscode/betterReplaceOnSave.json",
+    "${env:HOME}/.dotfiles/vscode/betterReplaceOnSave.json",
+    "${env:UserProfile}/.dotfiles/vscode/betterReplaceOnSave.json"
   ]
   // ...
 }
@@ -75,10 +80,24 @@ Configure your replacements using the following settings:
 You can organize your replacements into separate files to avoid cluttering your settings.json:
 
 - Use the `betterReplaceOnSave.replacementsFiles` setting to specify file paths
-- Paths can be relative to your workspace root or absolute
+- Paths can be relative to your workspace root, absolute, or use variables for user home directory
+- **Variable support (New in 0.4.0)**: Use `~/path`, `${userHome}/path`, `${env:HOME}/path`, `${env:UserProfile}/path`, or `${env:VARIABLE_NAME}/path`
 - Files should contain JSON arrays of replacement objects with the same format as the `replacements` setting
 - External file replacements are merged with settings-based replacements
 - Files are automatically watched for changes and reloaded
+
+**Example paths with variables:**
+```json
+{
+  "betterReplaceOnSave.replacementsFiles": [
+    "betterReplaceOnSave.json",  // Workspace relative
+    "~/dotfiles/vscode/betterReplaceOnSave.json",  // User home with tilde
+    "${userHome}/.config/vscode/betterReplaceOnSave.json",  // User home variable
+    "${env:HOME}/.dotfiles/vscode/betterReplaceOnSave.json",  // HOME environment variable (Unix/Linux/Mac)
+    "${env:UserProfile}/.dotfiles/vscode/betterReplaceOnSave.json"  // UserProfile environment variable (Windows)
+  ]
+}
+```
 
 **Example replacement file (`betterReplaceOnSave.json`):**
 ```json
@@ -114,7 +133,7 @@ You can configure VS Code to run only specific replacements on save:
 To apply a specific replacement manually:
 
 1. Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac)
-2. Search for "Apply Specific Replacement" 
+2. Search for "Apply Specific Replacement"
 3. Select the replacement by ID from the dropdown
 
 This is particularly useful when you want to apply a replacement regardless of language restrictions.
@@ -140,6 +159,12 @@ Support for specific replacement code actions, and "Apply specific replacement" 
 ### 0.3.0
 
 Support for external replacement files via `betterReplaceOnSave.replacementsFiles` configuration option.
+
+### 0.4.0
+
+Support for user home directory variables in `betterReplaceOnSave.replacementsFiles`. You can now use `~/path`, `${userHome}/path`, `${env:HOME}/path`, `${env:UserProfile}/path`, or `${env:VARIABLE_NAME}/path` in file paths.
+
+NOTE: *File watch is not supported for files outside the workspace root. Reload the window to apply changes to these files.*
 
 ---
 
