@@ -6,8 +6,8 @@ import * as os from 'os';
 
 export interface ReplacementConfig {
 	id?: string;  // Make id optional with ? syntax instead of string | undefined
-	search?: string;
-	replace?: string;
+	search: string;
+	replace: string;
 	languages?: string[];
 }
 
@@ -340,10 +340,10 @@ async function applyReplacements(
 		const text = document.getText();
 
 		for (const replacement of applicableReplacements) {
-            if (replacement.search === undefined) {
+			if (replacement.search === undefined) {
 				console.warn(`Better Replace-on-Save: Missing search pattern for replacement`, replacement);
-                continue;
-            }
+				continue;
+			}
 
 			const searchValue = new RegExp(replacement.search, 'gd');
 			const results = text.matchAll(searchValue);
