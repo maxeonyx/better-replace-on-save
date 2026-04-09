@@ -138,15 +138,7 @@ To apply a specific replacement manually:
 
 This is particularly useful when you want to apply a replacement regardless of language restrictions.
 
-<!--
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
--->
-
 ## Release Notes
-
-Users appreciate release notes as you update your extension.
 
 ### 0.1.0
 
