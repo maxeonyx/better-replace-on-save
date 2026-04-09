@@ -143,6 +143,10 @@ This is particularly useful when you want to apply a replacement regardless of l
 
 ## Release Notes
 
+### 0.4.1
+
+External replacement files outside the workspace root now reload automatically when they change, and there is a new `Reload Replacement Files` command for manual refresh.
+
 ### 0.1.0
 
 Initial release

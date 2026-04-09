@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 export interface ReplacementConfig {
-	id?: string;  // Make id optional with ? syntax instead of string | undefined
+	id?: string;
 	search: string;
 	replace: string;
 	languages?: string[];
@@ -177,6 +177,9 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 				workspaceWatcher.onDidDelete(reloadReplacements);
 				watcher = workspaceWatcher;
 			} else {
+				// VS Code file watchers only report changes for files inside the workspace.
+				// External replacement files are a supported feature, so use Node's polling
+				// watcher for those paths instead of silently leaving the cache stale.
 				const onFileChange = () => {
 					reloadReplacements();
 				};
@@ -389,7 +392,7 @@ async function applyReplacements(
 				const start = result.index;
 				const end = result.index + result[0].length;
 				const matchedText = text.substring(start, end);
-				const replacementText = matchedText.replace(searchValue, replacement.replace ?? "");
+				const replacementText = matchedText.replace(searchValue, replacement.replace);
 				editBuilder.replace(new vscode.Range(document.positionAt(start), document.positionAt(end)), replacementText);
 			}
 		}

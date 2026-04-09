@@ -71,4 +71,9 @@ Added support for user home directory and environment variables in `betterReplac
 - **Graceful handling**: Undefined environment variables are left as-is with a warning
 - **Path normalization**: Prevents issues with consecutive slashes in expanded paths
 
-**Known limitation**: File watching is not supported for files outside the workspace root. Reload the window to apply changes to these files.
+## 0.4.1
+
+### Fixed external replacement file reloading
+
+- Automatically reload `replacementsFiles` changes for files outside the workspace root
+- Added `better-replace-on-save.reloadReplacementFiles` for manual config refresh from the command palette

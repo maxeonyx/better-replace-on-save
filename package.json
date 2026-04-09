@@ -2,7 +2,7 @@
   "name": "better-replace-on-save",
   "displayName": "Better Replace-on-Save",
   "description": "Configurable search and replace on save - with proper VSCode integration.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "maxeonyx",
   "repository": "https://github.com/maxeonyx/better-replace-on-save",
   "icon": "icon.png",
@@ -38,12 +38,12 @@
         "title": "Apply Specific Replacement",
         "category": "Better Replace-on-Save",
         "description": "Apply a single replacement rule by ID, with optional language filter override"
-	      },
-	      {
-	        "command": "better-replace-on-save.reloadReplacementFiles",
-	        "title": "Reload Replacement Files",
-	        "category": "Better Replace-on-Save",
-	        "description": "Reload replacement configuration from settings and external files"
+      },
+      {
+        "command": "better-replace-on-save.reloadReplacementFiles",
+        "title": "Reload Replacement Files",
+        "category": "Better Replace-on-Save",
+        "description": "Reload replacement configuration from settings and external files"
       }
     ],
     "configuration": {

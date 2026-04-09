@@ -590,10 +590,9 @@ suite('Extension Test Suite', () => {
 				const doc = await createTestFile('replfiles-reload-command-updated.testfile.txt', 'gamma');
 
 				await vscode.commands.executeCommand('better-replace-on-save.reloadReplacementFiles');
-				const reloadedDoc = await vscode.workspace.openTextDocument(doc.uri);
-				await vscode.window.showTextDocument(reloadedDoc);
+				await vscode.window.showTextDocument(doc);
 				await vscode.commands.executeCommand('better-replace-on-save.applyReplacements');
-				await assertReplacement(reloadedDoc, 'delta');
+				await assertReplacement(doc, 'delta');
 			} finally {
 				await fs.rm(tempDir, { recursive: true, force: true });
 			}
