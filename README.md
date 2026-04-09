@@ -24,6 +24,7 @@ eg.
 
 - `source.applyReplacements` CodeActions provider which can be used in the `editor.codeActionsOnSave` setting
 - Command `better-replace-on-save.applyReplacements` ("Apply Replacements") that can be executed from the command palette
+- Command `better-replace-on-save.reloadReplacementFiles` ("Reload Replacement Files") to refresh settings and external replacement files on demand
 - Language-specific replacements that only apply to files of specified languages
 - Comprehensive settings documentation with VS Code IntelliSense support
 
@@ -84,7 +85,9 @@ You can organize your replacements into separate files to avoid cluttering your 
 - **Variable support (New in 0.4.0)**: Use `~/path`, `${userHome}/path`, `${env:HOME}/path`, `${env:UserProfile}/path`, or `${env:VARIABLE_NAME}/path`
 - Files should contain JSON arrays of replacement objects with the same format as the `replacements` setting
 - External file replacements are merged with settings-based replacements
-- Files are automatically watched for changes and reloaded
+- Files are automatically watched for changes and reloaded, including files outside the workspace root
+
+If you want to force an immediate refresh, run the `Reload Replacement Files` command from the command palette.
 
 **Example paths with variables:**
 ```json
@@ -156,7 +159,9 @@ Support for external replacement files via `betterReplaceOnSave.replacementsFile
 
 Support for user home directory variables in `betterReplaceOnSave.replacementsFiles`. You can now use `~/path`, `${userHome}/path`, `${env:HOME}/path`, `${env:UserProfile}/path`, or `${env:VARIABLE_NAME}/path` in file paths.
 
-NOTE: *File watch is not supported for files outside the workspace root. Reload the window to apply changes to these files.*
+### 0.4.1
+
+External replacement files outside the workspace root now reload automatically when they change, and there is a new `Reload Replacement Files` command for manual refresh.
 
 ---
 
