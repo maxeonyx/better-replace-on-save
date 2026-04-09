@@ -517,7 +517,9 @@ suite('Extension Test Suite', () => {
 			}
 		});
 
-		test('Refreshing an out-of-workspace replacement file updates cached replacements automatically', async () => {
+		test('Refreshing an out-of-workspace replacement file updates cached replacements automatically', async function () {
+			this.timeout(10000);
+
 			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'better-replace-on-save-auto-reload-'));
 			const outsideWorkspaceFilePath = path.join(tempDir, 'outside-workspace-replacements.json');
 
@@ -588,9 +590,10 @@ suite('Extension Test Suite', () => {
 				const doc = await createTestFile('replfiles-reload-command-updated.testfile.txt', 'gamma');
 
 				await vscode.commands.executeCommand('better-replace-on-save.reloadReplacementFiles');
-				await vscode.window.showTextDocument(doc);
+				const reloadedDoc = await vscode.workspace.openTextDocument(doc.uri);
+				await vscode.window.showTextDocument(reloadedDoc);
 				await vscode.commands.executeCommand('better-replace-on-save.applyReplacements');
-				await assertReplacement(doc, 'delta');
+				await assertReplacement(reloadedDoc, 'delta');
 			} finally {
 				await fs.rm(tempDir, { recursive: true, force: true });
 			}

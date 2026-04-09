@@ -16,7 +16,8 @@ export { expandVariables };
 
 // Global cache for merged replacements and file watchers
 let cachedReplacements: ReplacementConfig[] = [];
-let fileWatchers: vscode.FileSystemWatcher[] = [];
+let fileWatchers: vscode.Disposable[] = [];
+let reloadGeneration = 0;
 
 /**
  * Expand variables in file paths
@@ -54,21 +55,42 @@ function expandVariables(filePath: string): string {
 	return expandedPath;
 }
 
+function resolveReplacementFilePath(filePath: string): string {
+	let resolvedPath = expandVariables(filePath);
+
+	if (!path.isAbsolute(resolvedPath)) {
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (workspaceFolders && workspaceFolders.length > 0) {
+			resolvedPath = path.join(workspaceFolders[0].uri.fsPath, resolvedPath);
+		}
+	}
+
+	return resolvedPath;
+}
+
+function isWorkspaceFile(filePath: string): boolean {
+	if (!path.isAbsolute(filePath)) {
+		return false;
+	}
+
+	return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath)) !== undefined;
+}
+
+async function reloadReplacementCache(): Promise<void> {
+	const generation = ++reloadGeneration;
+	const replacements = await loadAllReplacements();
+
+	if (generation === reloadGeneration) {
+		cachedReplacements = replacements;
+	}
+}
+
 /**
  * Load replacements from an external file
  */
 async function loadReplacementsFromFile(filePath: string): Promise<ReplacementConfig[]> {
 	try {
-		// First, expand variables in the file path
-		let resolvedPath = expandVariables(filePath);
-		
-		// Then resolve relative paths relative to workspace root
-		if (!path.isAbsolute(resolvedPath)) {
-			const workspaceFolders = vscode.workspace.workspaceFolders;
-			if (workspaceFolders && workspaceFolders.length > 0) {
-				resolvedPath = path.join(workspaceFolders[0].uri.fsPath, resolvedPath);
-			}
-		}
+		const resolvedPath = resolveReplacementFilePath(filePath);
 
 		// Check if file exists
 		if (!fs.existsSync(resolvedPath)) {
@@ -140,25 +162,30 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 	const replacementFiles: string[] = config.get('replacementsFiles') || [];
 
 	for (const filePath of replacementFiles) {
-		// Expand variables and resolve relative paths
-		let resolvedPath = expandVariables(filePath);
-		if (!path.isAbsolute(resolvedPath)) {
-			const workspaceFolders = vscode.workspace.workspaceFolders;
-			if (workspaceFolders && workspaceFolders.length > 0) {
-				resolvedPath = path.join(workspaceFolders[0].uri.fsPath, resolvedPath);
-			}
-		}
+		const resolvedPath = resolveReplacementFilePath(filePath);
 
 		try {
-			const watcher = vscode.workspace.createFileSystemWatcher(resolvedPath);
-			
-			const reloadReplacements = async () => {
-				cachedReplacements = await loadAllReplacements();
+			const reloadReplacements = () => {
+				void reloadReplacementCache();
 			};
 
-			watcher.onDidCreate(reloadReplacements);
-			watcher.onDidChange(reloadReplacements);
-			watcher.onDidDelete(reloadReplacements);
+			let watcher: vscode.Disposable;
+			if (isWorkspaceFile(resolvedPath)) {
+				const workspaceWatcher = vscode.workspace.createFileSystemWatcher(resolvedPath);
+				workspaceWatcher.onDidCreate(reloadReplacements);
+				workspaceWatcher.onDidChange(reloadReplacements);
+				workspaceWatcher.onDidDelete(reloadReplacements);
+				watcher = workspaceWatcher;
+			} else {
+				const onFileChange = () => {
+					reloadReplacements();
+				};
+
+				fs.watchFile(resolvedPath, { interval: 500 }, onFileChange);
+				watcher = new vscode.Disposable(() => {
+					fs.unwatchFile(resolvedPath, onFileChange);
+				});
+			}
 
 			fileWatchers.push(watcher);
 			context.subscriptions.push(watcher);
@@ -170,9 +197,7 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 
 export function activate(context: vscode.ExtensionContext) {
 	// Load initial replacements
-	loadAllReplacements().then(replacements => {
-		cachedReplacements = replacements;
-	});
+	void reloadReplacementCache();
 
 	// Setup file watchers
 	setupFileWatchers(context);
@@ -182,7 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.workspace.onDidChangeConfiguration(async (event) => {
 			if (event.affectsConfiguration('betterReplaceOnSave')) {
 				// Reload replacements when configuration changes
-				cachedReplacements = await loadAllReplacements();
+				await reloadReplacementCache();
 				
 				// Re-setup file watchers if replacementsFiles changed
 				if (event.affectsConfiguration('betterReplaceOnSave.replacementsFiles')) {
@@ -252,6 +277,12 @@ export function activate(context: vscode.ExtensionContext) {
 			// When called from on-save code action, isCodeAction will be true (passed by CodeActionProvider)
 			// When called directly from command palette, isCodeAction will be undefined or false
 			await applyReplacements(editor, replacementId, !!isCodeAction);
+		})
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand('better-replace-on-save.reloadReplacementFiles', async () => {
+			await reloadReplacementCache();
+			vscode.window.showInformationMessage('Reloaded Better Replace-on-Save replacement files.');
 		})
 	);
 }
@@ -340,12 +371,19 @@ async function applyReplacements(
 		const text = document.getText();
 
 		for (const replacement of applicableReplacements) {
-			if (replacement.search === undefined) {
-				console.warn(`Better Replace-on-Save: Missing search pattern for replacement`, replacement);
+			if (replacement.search === undefined || replacement.replace === undefined) {
+				console.warn(`Better Replace-on-Save: Missing search or replace value for replacement`, replacement);
 				continue;
 			}
 
-			const searchValue = new RegExp(replacement.search, 'gd');
+			let searchValue: RegExp;
+			try {
+				searchValue = new RegExp(replacement.search, 'gd');
+			} catch (error) {
+				console.warn(`Better Replace-on-Save: Invalid search pattern: ${replacement.search}`, error);
+				continue;
+			}
+
 			const results = text.matchAll(searchValue);
 			for (const result of results) {
 				const start = result.index;
@@ -358,4 +396,7 @@ async function applyReplacements(
 	}));
 }
 
-export function deactivate() { }
+export function deactivate() {
+	fileWatchers.forEach(watcher => watcher.dispose());
+	fileWatchers = [];
+}

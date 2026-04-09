@@ -38,6 +38,12 @@
         "title": "Apply Specific Replacement",
         "category": "Better Replace-on-Save",
         "description": "Apply a single replacement rule by ID, with optional language filter override"
+	      },
+	      {
+	        "command": "better-replace-on-save.reloadReplacementFiles",
+	        "title": "Reload Replacement Files",
+	        "category": "Better Replace-on-Save",
+	        "description": "Reload replacement configuration from settings and external files"
       }
     ],
     "configuration": {
