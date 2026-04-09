@@ -1,15 +1,12 @@
-name: ci
+name: publish
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+    environment: publish
 
     steps:
       - name: Check out
@@ -39,12 +36,8 @@ jobs:
           mkdir ~/.vscode && echo '{ "disable-hardware-acceleration": true }' > ~/.vscode/argv.json
           xvfb-run -a npm run test
 
-      - name: Package VSIX
+      - name: Publish VSIX
+        env:
+          VSCE_PAT: ${{ secrets.VSCODE_MARKETPLACE_TOKEN }}
         run: |
-          npm run package
-
-      - name: Upload VSIX as a workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vsix
-          path: ./*.vsix
+          npm run publish
