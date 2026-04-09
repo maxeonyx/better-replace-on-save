@@ -143,10 +143,6 @@ This is particularly useful when you want to apply a replacement regardless of l
 
 ## Release Notes
 
-### 0.4.1
-
-External replacement files outside the workspace root now reload automatically when they change, and there is a new `Reload Replacement Files` command for manual refresh.
-
 ### 0.1.0
 
 Initial release
@@ -162,6 +158,10 @@ Support for external replacement files via `betterReplaceOnSave.replacementsFile
 ### 0.4.0
 
 Support for user home directory variables in `betterReplaceOnSave.replacementsFiles`. You can now use `~/path`, `${userHome}/path`, `${env:HOME}/path`, `${env:UserProfile}/path`, or `${env:VARIABLE_NAME}/path` in file paths.
+
+### 0.4.1
+
+External replacement files outside the workspace root now reload automatically when they change, and there is a new `Reload Replacement Files` command for manual refresh.
 
 ---
 

@@ -153,7 +153,7 @@ async function loadAllReplacements(): Promise<ReplacementConfig[]> {
 /**
  * Setup file watchers for replacement files
  */
-function setupFileWatchers(context: vscode.ExtensionContext): void {
+function setupFileWatchers(): void {
 	// Clean up existing watchers
 	fileWatchers.forEach(watcher => watcher.dispose());
 	fileWatchers = [];
@@ -180,7 +180,12 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 				// VS Code file watchers only report changes for files inside the workspace.
 				// External replacement files are a supported feature, so use Node's polling
 				// watcher for those paths instead of silently leaving the cache stale.
-				const onFileChange = () => {
+				// Only reload when mtime changes so missing files do not trigger a reload loop.
+				const onFileChange = (curr: fs.Stats, prev: fs.Stats) => {
+					if (curr.mtimeMs === prev.mtimeMs) {
+						return;
+					}
+
 					reloadReplacements();
 				};
 
@@ -191,7 +196,6 @@ function setupFileWatchers(context: vscode.ExtensionContext): void {
 			}
 
 			fileWatchers.push(watcher);
-			context.subscriptions.push(watcher);
 		} catch (error) {
 			console.error(`Better Replace-on-Save: Error setting up file watcher for ${resolvedPath}:`, error);
 		}
@@ -203,7 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 	void reloadReplacementCache();
 
 	// Setup file watchers
-	setupFileWatchers(context);
+	setupFileWatchers();
 
 	// Watch for configuration changes
 	context.subscriptions.push(
@@ -214,7 +218,7 @@ export function activate(context: vscode.ExtensionContext) {
 				
 				// Re-setup file watchers if replacementsFiles changed
 				if (event.affectsConfiguration('betterReplaceOnSave.replacementsFiles')) {
-					setupFileWatchers(context);
+					setupFileWatchers();
 				}
 			}
 		})

@@ -73,7 +73,7 @@ Added support for user home directory and environment variables in `betterReplac
 
 ## 0.4.1
 
-### Fixed external replacement file reloading
+### Fix external replacement file reloading
 
 - Automatically reload `replacementsFiles` changes for files outside the workspace root
 - Added `better-replace-on-save.reloadReplacementFiles` for manual config refresh from the command palette
