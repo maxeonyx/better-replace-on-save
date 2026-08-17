@@ -64,6 +64,23 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(content, expected, message);
 	}
 
+	async function eventually(assertion: () => Promise<void>, timeoutMs: number = 5000, intervalMs: number = 100): Promise<void> {
+		const deadline = Date.now() + timeoutMs;
+		let lastError: unknown;
+
+		while (Date.now() < deadline) {
+			try {
+				await assertion();
+				return;
+			} catch (error) {
+				lastError = error;
+				await new Promise(resolve => setTimeout(resolve, intervalMs));
+			}
+		}
+
+		throw lastError;
+	}
+
 	// Test execution methods to reuse common patterns
 	async function runCommandOnFile(fileName: string, initialContent: string, command: string, ...args: any[]): Promise<vscode.TextDocument> {
 		const doc = await createTestFile(fileName, initialContent);
@@ -472,6 +489,113 @@ suite('Extension Test Suite', () => {
 			);
 
 			await assertReplacement(doc, 'This is loaded content');
+		});
+
+		test('Load replacements from an absolute file path outside the workspace', async () => {
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'better-replace-on-save-outside-workspace-'));
+			const outsideWorkspaceFilePath = path.join(tempDir, 'outside-workspace-replacements.json');
+
+			try {
+				await fs.writeFile(outsideWorkspaceFilePath, JSON.stringify([
+					{
+						search: 'outside',
+						replace: 'loaded'
+					}
+				], null, 2), 'utf-8');
+
+				await configureReplacementFiles([outsideWorkspaceFilePath]);
+
+				const doc = await runCommandOnFile(
+					'replfiles-outside-workspace-load.testfile.txt',
+					'This is outside content',
+					'better-replace-on-save.applyReplacements'
+				);
+
+				await assertReplacement(doc, 'This is loaded content');
+			} finally {
+				await fs.rm(tempDir, { recursive: true, force: true });
+			}
+		});
+
+		test('Refreshing an out-of-workspace replacement file updates cached replacements automatically', async function () {
+			this.timeout(10000);
+
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'better-replace-on-save-auto-reload-'));
+			const outsideWorkspaceFilePath = path.join(tempDir, 'outside-workspace-replacements.json');
+
+			try {
+				await fs.writeFile(outsideWorkspaceFilePath, JSON.stringify([
+					{
+						search: 'before',
+						replace: 'after'
+					}
+				], null, 2), 'utf-8');
+
+				await configureReplacementFiles([outsideWorkspaceFilePath]);
+
+				const initialDoc = await runCommandOnFile(
+					'replfiles-outside-workspace-initial.testfile.txt',
+					'before',
+					'better-replace-on-save.applyReplacements'
+				);
+				await assertReplacement(initialDoc, 'after');
+
+				await fs.writeFile(outsideWorkspaceFilePath, JSON.stringify([
+					{
+						search: 'second',
+						replace: 'updated'
+					}
+				], null, 2), 'utf-8');
+
+				const doc = await createTestFile('replfiles-outside-workspace-refresh.testfile.txt', 'second');
+
+				await eventually(async () => {
+					await vscode.window.showTextDocument(doc);
+					await vscode.commands.executeCommand('better-replace-on-save.applyReplacements');
+					await assertReplacement(doc, 'updated');
+				});
+			} finally {
+				await fs.rm(tempDir, { recursive: true, force: true });
+			}
+		});
+
+		test('Reload replacement files command refreshes an out-of-workspace replacement file on demand', async () => {
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'better-replace-on-save-manual-reload-'));
+			const outsideWorkspaceFilePath = path.join(tempDir, 'outside-workspace-replacements.json');
+
+			try {
+				await fs.writeFile(outsideWorkspaceFilePath, JSON.stringify([
+					{
+						search: 'alpha',
+						replace: 'beta'
+					}
+				], null, 2), 'utf-8');
+
+				await configureReplacementFiles([outsideWorkspaceFilePath]);
+
+				const initialDoc = await runCommandOnFile(
+					'replfiles-reload-command-initial.testfile.txt',
+					'alpha',
+					'better-replace-on-save.applyReplacements'
+				);
+				await assertReplacement(initialDoc, 'beta');
+
+				await fs.writeFile(outsideWorkspaceFilePath, JSON.stringify([
+					{
+						search: 'gamma',
+						replace: 'delta'
+					}
+				], null, 2), 'utf-8');
+
+				const doc = await createTestFile('replfiles-reload-command-updated.testfile.txt', 'gamma');
+
+				await vscode.commands.executeCommand('better-replace-on-save.reloadReplacementFiles');
+				await vscode.window.showTextDocument(doc);
+				await vscode.commands.executeCommand('better-replace-on-save.applyReplacements');
+				await assertReplacement(doc, 'delta');
+			} finally {
+				await fs.rm(tempDir, { recursive: true, force: true });
+			}
 		});
 
 		test('Merge settings and file-based replacements', async () => {
